@@ -54,7 +54,7 @@ const logCall = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Normalize call status to avoid schema validation errors
+    // Normalize call status to avoid schema validation errors (supports "missed", "completed", "rejected")
     const resolvedStatus = callStatus || "completed";
 
     // Check if a chatId is provided
@@ -142,9 +142,9 @@ const deleteCallLog = async (req, res) => {
       return res.status(404).json({ message: "Call log not found" });
     }
 
-    // Add user to deletedFor array if not already present
+    // Ensure deletedFor array exists and add user safely
+    call.deletedFor = call.deletedFor || [];
     if (!call.deletedFor.includes(userId)) {
-      call.callDeletedFor = call.deletedFor || [];
       call.deletedFor.push(userId);
       await call.save();
     }
