@@ -32,6 +32,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:3000",
+  "https://celadon-torrone-308377.netlify.app", // Added your Netlify frontend URL here!
 ];
 
 // Global CORS Middleware
