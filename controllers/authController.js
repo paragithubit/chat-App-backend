@@ -1,10 +1,14 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const axios = require("axios");
+const { Resend } = require("resend");
 const User = require("../models/User");
 const OTP = require("../models/OtpModel");
 const generateToken = require("../config/generateToken");
 const sendEmail = require("../utils/sendEmail");
+
+// Initialize Resend with your API key from environment variables
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Helper function to validate password complexity
 const validatePassword = (password) => {
@@ -12,7 +16,7 @@ const validatePassword = (password) => {
   // 2. Must contain at least one number (?=.*\d)
   // 3. Must contain at least one special character (?=.*[!@#$%^&*(),.?":{}|<>-])
   // 4. Minimum length of 6 characters
-  const passwordRegex = /^[A-Z](?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>-]).{5,}$/;
+  const passwordRegex = /^[A-Z](?=.*\d)(?=.*[!@#$\%^&*(),.?":{}\vert{}<>-]).{5,}$/;
   return passwordRegex.test(password);
 };
 
@@ -149,7 +153,7 @@ const verifyOtp = async (req, res) => {
 // 3. GET REGISTERED GOOGLE ACCOUNTS (Account Picker Popup Sync)
 const getGoogleAccounts = async (req, res) => {
   try {
-    const users = await User.find({ email: { $exists: true, $ne: null } }).select("name email profilePicture");
+    const users = await User.find({ email: { $exists: true,$ne: null } }).select("name email profilePicture");
     res.status(200).json(users);
   } catch (error) {
     console.error("Error in getGoogleAccounts:", error);
@@ -269,7 +273,7 @@ const registerEmail = async (req, res) => {
   }
 };
 
-// 6. FORGOT PASSWORD (Sends clickable token link to user's registered email)
+// 6. FORGOT PASSWORD (Sends clickable token link via Resend to user's registered email)
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -287,7 +291,9 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 mins expiry
     await user.save();
 
-    const resetUrl = `http://localhost:5173/#/reset-password/${resetToken}`;
+    // Dynamically fallback to your deployed Netlify frontend URL if FRONTEND_URL isn't set in Render
+    const frontendUrl = process.env.FRONTEND_URL || "https://celadon-torrone-308377.netlify.app";
+    const resetUrl = `${frontendUrl}/#/reset-password/${resetToken}`;
 
     const message = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -300,11 +306,18 @@ const forgotPassword = async (req, res) => {
       </div>
     `;
 
-    await sendEmail({
-      email: user.email,
+    // Send email using Resend API
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM || "Chat App <onboarding@resend.dev>",
+      to: [user.email],
       subject: "Password Reset Request",
       html: message,
     });
+
+    if (error) {
+      console.error("Resend API Error:", error);
+      return res.status(500).json({ message: "Failed to send password reset email via Resend." });
+    }
 
     res.status(200).json({ message: "Password reset link sent successfully to your email." });
   } catch (error) {
