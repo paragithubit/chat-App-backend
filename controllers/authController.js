@@ -292,7 +292,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Dynamically fallback to your deployed Netlify frontend URL if FRONTEND_URL isn't set in Render
-    const frontendUrl = process.env.FRONTEND_URL || "https://celadon-torrone-308377.netlify.app";
+    const frontendUrl = process.env.FRONTEND_URL || "https://mern-chat-app-for-meesaging.netlify.app";
     const resetUrl = `${frontendUrl}/#/reset-password/${resetToken}`;
 
     const message = `
