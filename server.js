@@ -57,17 +57,33 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Routes Mounting (Added /auth alias to fix the 404 error)
+// Routes Mounting (Added direct aliases for all routes to fix 404 errors)
 app.use("/auth", authRoutes);
 app.use("/api/auth", authRoutes);
+
+app.use("/chat", chatRoutes);
 app.use("/api/chat", chatRoutes);
+
+app.use("/message", messageRoutes);
 app.use("/api/message", messageRoutes);
+
+app.use("/users", userRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/user", userRoutes);
+
+app.use("/calls", callRoutes);
 app.use("/api/calls", callRoutes);
+
+app.use("/status", statusRoutes);
 app.use("/api/status", statusRoutes);
+
+app.use("/ai", aiRoutes);
 app.use("/api/ai", aiRoutes);
+
+app.use("/contacts", contactRoutes);
 app.use("/api/contacts", contactRoutes);
+
+app.use("/otp", otpRoutes);
 app.use("/api/otp", otpRoutes);
 
 // Base Test Route
